@@ -1,0 +1,34 @@
+Bluepill.application("hnsearch", :log_file => "/var/www/hnsearch/current/log/bluepill.log") do |app|
+  app.process("hnsearch-crawler") do |process|
+    process.working_dir = "/var/www/hnsearch/current"
+    process.environment = { 'RAILS_ENV' => 'production' }
+
+    process.start_grace_time    = 30.seconds
+    process.stop_grace_time     = 30.seconds
+    process.restart_grace_time  = 30.seconds
+
+    process.start_command = "./bin/crawler"
+    process.daemonize = true
+    process.stdout = process.stderr = "/var/www/hnsearch/shared/log/crawler.log"
+
+    process.pid_file = "/var/www/hnsearch/shared/pids/crawler.pid"
+  end
+  (1..16).each do |i|
+    app.process("hnsearch-delayed_job.#{i}") do |process|
+      process.working_dir = "/var/www/hnsearch/current"
+      process.environment = { 'RAILS_ENV' => 'production' }
+
+      process.start_grace_time    = 30.seconds
+      process.stop_grace_time     = 30.seconds
+      process.restart_grace_time  = 30.seconds
+
+      process.start_command = "./bin/delayed_job start -i #{i}"
+      process.stop_command  = "./bin/delayed_job stop -i #{i}"
+
+      process.pid_file = "/var/www/hnsearch/shared/pids/delayed_job.#{i}.pid"
+
+      # seems our delayed_job workers get stucked, let's try to restart them every 2 hours (#49)
+      process.checks :running_time, :every => 10.minutes, :below => 2.hours
+    end
+  end
+end
