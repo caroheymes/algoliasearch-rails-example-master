@@ -7,6 +7,15 @@ require "action_mailer/railtie"
 require "sprockets/railtie"
 # require "rails/test_unit/railtie"
 
+require "active_model/railtie"
+require "active_job/railtie"
+
+require "action_controller/railtie"
+
+require "action_view/railtie"
+
+
+
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(:default, Rails.env)
